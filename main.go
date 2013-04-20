@@ -25,6 +25,7 @@ var currentMatches [][]int
 var scale float32
 var animateFall []*freefall
 var fallticks int
+var mouseLock bool
 
 const (
 	HEX_WIDTH  int = 44
@@ -144,6 +145,7 @@ func renderHexMap() {
 	}
 	gl.PopMatrix()
 	if len(currentMatches) > 0 {
+		mouseLock = true
 		if scale > 0 {
 			scale -= 0.1
 			for _, v := range currentMatches {
@@ -221,6 +223,8 @@ func renderHexMap() {
 					currentMatches = checkHexMap()
 					scale = 1
 					fallticks = 0
+					mouseLock = false
+					fmt.Println("Mouse unlocked 1")
 					animateFall = nil
 				}
 			}
@@ -275,6 +279,8 @@ func renderHexMap() {
 					currExY = -1
 					rotate = 0
 					timesToRotate = 0
+					mouseLock = false
+					fmt.Println("Mouse unlocked 3")
 				}
 				rotate = 0
 				timesToRotate--
@@ -402,7 +408,7 @@ func drawHex(x, y, kind int) {
 }
 
 func mouseButtonCallback(button, state int) {
-	if currExX != -1 || currExY != -1 {
+	if currExX != -1 || currExY != -1 || mouseLock {
 		return
 	}
 	x, y := glfw.MousePos()
@@ -422,6 +428,8 @@ func mouseButtonCallback(button, state int) {
 				return
 			}
 			timesToRotate = 2
+			mouseLock = true
+			fmt.Println("Mouse locked")
 			// fmt.Println(currExX, currExY)
 			// renderHexMap(currExX, currExY)
 		}
