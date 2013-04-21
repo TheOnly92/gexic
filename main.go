@@ -363,9 +363,9 @@ func renderHexMap() {
 					starScale = 1
 					starAlpha = 0
 					removeHexAndGenNew(currentMatches)
-					currentMatches = checkHexMap()
 					makeStarAndGenNew(starMatches)
-					starMatches = [][]int{}
+					currentMatches = checkHexMap()
+					starMatches = checkHexStar()
 					currStarCenter = []int{}
 					scale = 1
 					fallticks = 0
@@ -465,11 +465,6 @@ func renderHexMap() {
 					fmt.Println(idx, v[0], v[1])
 				}
 				hexMap[v2[0][0]][v2[0][1]], hexMap[v2[1][0]][v2[1][1]], hexMap[v2[2][0]][v2[2][1]] = hexMap[v2[2][0]][v2[2][1]], hexMap[v2[0][0]][v2[0][1]], hexMap[v2[1][0]][v2[1][1]]
-				// if currExX%2 == 0 {
-				// 	hexMap[currExX][currExY], hexMap[currExX+1][currExY], hexMap[currExX+1][currExY+1] = hexMap[currExX+1][currExY+1], hexMap[currExX][currExY], hexMap[currExX+1][currExY]
-				// } else {
-				// 	hexMap[currExX][currExY], hexMap[currExX+1][currExY-1], hexMap[currExX+1][currExY] = hexMap[currExX+1][currExY], hexMap[currExX][currExY], hexMap[currExX+1][currExY-1]
-				// }
 			}
 			starMatches = checkHexStar()
 			if len(starMatches) > 6 {
@@ -561,6 +556,17 @@ func calcClosestCenter(x, y int) []int {
 	if hexX%2 == 1 {
 		topy = 0
 	}
+	left := hexCenter(0, 0)
+	right := hexCenter(9, 0)
+	x = int(math.Min(math.Max(float64(x), float64(left[0])), float64(right[0])))
+	top := hexCenter(hexX, 0)
+	bottom := hexCenter(hexX, 7)
+	if hexX%2 == 1 {
+		bottom = hexCenter(hexX, 8)
+	}
+	fmt.Println("Original", y)
+	y = int(math.Min(math.Max(float64(y), float64(top[1])), float64(bottom[1])-2))
+	fmt.Println("Fixed", y)
 	hexY := int(math.Floor((float64(y+topy) - 80) / 36))
 	if hexX > 9 || hexY > 8 || hexX < 0 || hexY < 0 {
 		return []int{-1, -1, -1}
@@ -579,7 +585,7 @@ func calcClosestCenter(x, y int) []int {
 							selectedHex = [][]int{[]int{loopX, loopY, 1}, []int{loopX + 1, loopY, 2}, []int{loopX, loopY + 1, 3}}
 							// fmt.Println(1, c2[1], loopX+1)
 							return []int{c2[0] - HEX_WIDTH/2, c2[1], 1}
-						} else if pointInTriangle(float64(x), float64(y), float64(c1[0]), float64(c1[1]), float64(c4[0]), float64(c4[1]), float64(c2[0]), float64(c2[1])) {
+						} else if pointInTriangle(float64(x), float64(y), float64(c1[0]), float64(c1[1]), float64(c4[0]), float64(c4[1]), float64(c2[0]), float64(c2[1])) && loopX+1 < 10 && loopY-1 >= 0 {
 							selectedHex = [][]int{[]int{loopX, loopY, 4}, []int{loopX + 1, loopY - 1, 5}, []int{loopX + 1, loopY, 6}}
 							// fmt.Println(2, c1[1], loopX)
 							return []int{c1[0] + HEX_WIDTH/2 - 7, c1[1] + 4, 0}
