@@ -201,8 +201,14 @@ func renderHexMap() {
 		}
 		starty := 0
 		for y := starty; y < maxy; y++ {
-			if y == currExY && x == currExX || currExX%2 == 0 && (x == currExX+1 && y == currExY || x == currExX+1 && y == currExY+1) || currExX%2 == 1 && (x == currExX+1 && y == currExY || x == currExX+1 && y == currExY-1) {
-				continue
+			if currExX > -1 && currExY > -1 && hexMap[currExX][currExY] == 6 {
+				if y == currExY && x == currExX || y == currExY+1 && x == currExX || y == currExY-1 && x == currExX || currExX%2 == 0 && ((currExX == x-1 || currExX == x+1) && currExY == y-1 || (currExX == x-1 || currExX == x+1) && currExY == y) || currExX%2 == 1 && ((currExX == x-1 || currExX == x+1) && currExY == y || (currExX == x-1 || currExX == x+1) && currExY == y+1) {
+					continue
+				}
+			} else {
+				if y == currExY && x == currExX || currExX%2 == 0 && (x == currExX+1 && y == currExY || x == currExX+1 && y == currExY+1) || currExX%2 == 1 && (x == currExX+1 && y == currExY || x == currExX+1 && y == currExY-1) {
+					continue
+				}
 			}
 			found := false
 			for _, v := range currentMatches {
@@ -361,33 +367,61 @@ func renderHexMap() {
 		if currExX%2 == 1 {
 			topy = 0
 		}
-		gl.Translatef(float32(currExX*30+HEX_WIDTH+80), float32(currExY*36+topy+20+80), 0)
-		gl.Scalef(1.3, 1.3, 1)
-		gl.Rotatef(rotate, 0, 0, 1)
-		if currExX%2 == 0 {
-			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-			drawHex(-12, -36, hexMap[currExX+1][currExY], 1)
+		if hexMap[currExX][currExY] == 6 {
+			timesToRotate = 0
+			gl.Translatef(float32(currExX*30+102), float32(currExY*36+topy+94), 0)
+			gl.Scalef(1.3, 1.3, 1)
+			gl.Rotatef(rotate, 0, 0, 1)
+			drawHex(-22, -14, 6, 1)
+			drawHex(-22, -14-HEX_HEIGHT, hexMap[currExX][currExY-1], 1)
+			drawHex(-22, -20+HEX_HEIGHT, hexMap[currExX][currExY+1], 1)
+			pm := 0
+			if currExX%2 == 1 {
+				pm = -1
+			}
+			drawHex(-52, -36, hexMap[currExX-1][currExY+pm], 1)
+			drawHex(-52, -40+HEX_HEIGHT, hexMap[currExX-1][currExY+pm+1], 1)
+			drawHex(8, -36, hexMap[currExX+1][currExY+pm], 1)
+			drawHex(8, -40+HEX_HEIGHT, hexMap[currExX+1][currExY+pm+1], 1)
 		} else {
+			gl.Translatef(float32(currExX*30+HEX_WIDTH+80), float32(currExY*36+topy+20+80), 0)
+			gl.Scalef(1.3, 1.3, 1)
+			gl.Rotatef(rotate, 0, 0, 1)
+			if currExX%2 == 0 {
+				gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+				drawHex(-12, -36, hexMap[currExX+1][currExY], 1)
+			} else {
+				gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+				drawHex(-12, -36, hexMap[currExX+1][currExY-1], 1)
+			}
 			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-			drawHex(-12, -36, hexMap[currExX+1][currExY-1], 1)
-		}
-		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-		drawHex(-44, -19, hexMap[currExX][currExY], 1)
-		if currExX%2 == 0 {
-			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-			drawHex(-12, -2, hexMap[currExX+1][currExY+1], 1)
-		} else {
-			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-			drawHex(-12, -2, hexMap[currExX+1][currExY], 1)
+			drawHex(-44, -19, hexMap[currExX][currExY], 1)
+			if currExX%2 == 0 {
+				gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+				drawHex(-12, -2, hexMap[currExX+1][currExY+1], 1)
+			} else {
+				gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+				drawHex(-12, -2, hexMap[currExX+1][currExY], 1)
+			}
 		}
 		gl.PopMatrix()
-		if rotate < 120 {
-			rotate += 12
+		if hexMap[currExX][currExY] != 6 && rotate < 120 {
+			rotate += 15
+		} else if hexMap[currExX][currExY] == 6 && rotate < 60 {
+			rotate += 6
 		} else {
-			if currExX%2 == 0 {
-				hexMap[currExX][currExY], hexMap[currExX+1][currExY], hexMap[currExX+1][currExY+1] = hexMap[currExX+1][currExY+1], hexMap[currExX][currExY], hexMap[currExX+1][currExY]
+			if hexMap[currExX][currExY] == 6 {
+				if currExX%2 == 0 {
+					hexMap[currExX][currExY-1], hexMap[currExX+1][currExY], hexMap[currExX+1][currExY+1], hexMap[currExX][currExY+1], hexMap[currExX-1][currExY+1], hexMap[currExX-1][currExY] = hexMap[currExX-1][currExY], hexMap[currExX][currExY-1], hexMap[currExX+1][currExY], hexMap[currExX+1][currExY+1], hexMap[currExX][currExY+1], hexMap[currExX-1][currExY+1]
+				} else {
+					hexMap[currExX][currExY-1], hexMap[currExX+1][currExY-1], hexMap[currExX+1][currExY], hexMap[currExX][currExY+1], hexMap[currExX-1][currExY], hexMap[currExX-1][currExY-1] = hexMap[currExX-1][currExY-1], hexMap[currExX][currExY-1], hexMap[currExX+1][currExY-1], hexMap[currExX+1][currExY], hexMap[currExX][currExY+1], hexMap[currExX-1][currExY]
+				}
 			} else {
-				hexMap[currExX][currExY], hexMap[currExX+1][currExY-1], hexMap[currExX+1][currExY] = hexMap[currExX+1][currExY], hexMap[currExX][currExY], hexMap[currExX+1][currExY-1]
+				if currExX%2 == 0 {
+					hexMap[currExX][currExY], hexMap[currExX+1][currExY], hexMap[currExX+1][currExY+1] = hexMap[currExX+1][currExY+1], hexMap[currExX][currExY], hexMap[currExX+1][currExY]
+				} else {
+					hexMap[currExX][currExY], hexMap[currExX+1][currExY-1], hexMap[currExX+1][currExY] = hexMap[currExX+1][currExY], hexMap[currExX][currExY], hexMap[currExX+1][currExY-1]
+				}
 			}
 			starMatches = checkHexStar()
 			if len(starMatches) > 6 {
@@ -472,7 +506,7 @@ func initGL() {
 
 	hexTex = initTexture("hex3c", HEX_WIDTH, HEX_HEIGHT)
 	wallpaper = initTexture("wallpaper-2594238", 1024, 768)
-	starTex = initTexture("hexstar", HEX_WIDTH, HEX_HEIGHT)
+	starTex = initTexture("hexstar2", HEX_WIDTH, HEX_HEIGHT)
 }
 
 func initTexture(filename string, width, height int) gl.Texture {
