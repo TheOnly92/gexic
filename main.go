@@ -564,9 +564,10 @@ func calcClosestCenter(x, y int) []int {
 	if hexX%2 == 1 {
 		bottom = hexCenter(hexX, 8)
 	}
-	fmt.Println("Original", y)
-	y = int(math.Min(math.Max(float64(y), float64(top[1])), float64(bottom[1])-2))
-	fmt.Println("Fixed", y)
+	y = int(math.Min(math.Max(float64(y), float64(top[1])), float64(bottom[1])))
+	if hexX%2 == 1 && y > bottom[1]-10 {
+		x = bottom[0]
+	}
 	hexY := int(math.Floor((float64(y+topy) - 80) / 36))
 	if hexX > 9 || hexY > 8 || hexX < 0 || hexY < 0 {
 		return []int{-1, -1, -1}
@@ -647,15 +648,16 @@ func main() {
 	gl.ClearColor(0., 0.2, 0.4, 0.)
 	initGL()
 
-	glfw.SetMouseButtonCallback(mouseButtonCallback)
-	glfw.SetCharCallback(charCallback)
-	glfw.SetMousePosCallback(mousePosCallback)
+	prevSelectPos = []int{0, 0, 0}
 
 	// PurgeQueue()
 	genHexMap()
 	for matches := checkHexMap(); len(matches) > 0; matches = checkHexMap() {
 		removeHexAndGenNew(matches)
 	}
+	glfw.SetMouseButtonCallback(mouseButtonCallback)
+	glfw.SetCharCallback(charCallback)
+	glfw.SetMousePosCallback(mousePosCallback)
 	currExX = -1
 	currExY = -1
 
