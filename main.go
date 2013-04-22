@@ -662,11 +662,14 @@ func main() {
 	currExY = -1
 
 	for sys.CheckExitMainLoop() {
-		timer := time.NewTimer(time.Second / 30)
+		start := glfw.Time()
+		wait := float64(1) / float64(30)
 		renderHexMap()
 		sys.Refresh()
-		<-timer.C
-		PurgeQueue()
+		diff := glfw.Time() - start
+		if diff < wait {
+			glfw.Sleep(wait - diff)
+		}
 	}
 }
 
@@ -678,7 +681,7 @@ func initGL() {
 	gl.LoadIdentity()
 	gl.Enable(gl.DEPTH_TEST)
 
-	hexTex = initTexture("hex4v", HEX_WIDTH, HEX_HEIGHT)
+	hexTex = initTexture("hex3", HEX_WIDTH, HEX_HEIGHT)
 	wallpaper = initTexture("wallpaper-2594238", 1024, 768)
 	starTex = initTexture("hexstar2", HEX_WIDTH, HEX_HEIGHT)
 	borderTex = initTexture("hexborder", 76, 76)
@@ -702,6 +705,12 @@ func initTexture(filename string, width, height int) gl.Texture {
 			r, g, b, a := img.At(x, y).RGBA()
 			if (filename == "hex4v" || filename == "hexstar2" || filename == "hexborder") && r == 0 && g == 0 && b == 0 {
 				a = 0
+			}
+			if filename == "hex3" {
+				r *= a
+				g *= a
+				b *= a
+				fmt.Println(r, g, b, a)
 			}
 			base := 4*x + canvas.Stride*y
 			canvas.Pix[base] = uint8(r)
