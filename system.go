@@ -20,7 +20,7 @@ func (s *System) Startup() {
 		return
 	}
 
-	// glfw.OpenWindowHint(glfw.FsaaSamples, 4)
+	glfw.OpenWindowHint(glfw.FsaaSamples, 4)
 	// glfw.OpenWindowHint(glfw.OpenGLVersionMajor, 3)
 	// glfw.OpenWindowHint(glfw.OpenGLVersionMinor, 2)
 	// glfw.OpenWindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)

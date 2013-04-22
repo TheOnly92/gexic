@@ -192,14 +192,14 @@ func renderHexMap() {
 	gl.TexCoord2f(1, 0)
 	gl.Vertex2i(1024, 0)
 	gl.End()
-	// gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.DECAL)
+	gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.DECAL)
 	gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.MODULATE)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.PushMatrix()
 	gl.Translatef(80, 80, 0)
 	for x := 0; x < 10; x++ {
 		maxy := 8
-		topy := 17
+		topy := 19
 		if x%2 == 1 {
 			maxy = 9
 			topy = 0
@@ -242,7 +242,7 @@ func renderHexMap() {
 				continue
 			}
 			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-			drawHex(x*30, topy+y*36, hexMap[x][y], 1)
+			drawHex(x*33, topy+y*38, hexMap[x][y], 1)
 		}
 	}
 	gl.PopMatrix()
@@ -252,11 +252,11 @@ func renderHexMap() {
 			scale -= 0.1
 			for _, v := range currentMatches {
 				gl.PushMatrix()
-				topy := 17
+				topy := 19
 				if v[0]%2 == 1 {
 					topy = 0
 				}
-				gl.Translatef(float32(v[0]*30+102), float32(v[1]*36+topy+94), 0)
+				gl.Translatef(float32(v[0]*33+102), float32(v[1]*38+topy+94), 0)
 				gl.Scalef(scale, scale, 1)
 				gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 				drawHex(-22, -14, hexMap[v[0]][v[1]], 1)
@@ -268,17 +268,17 @@ func renderHexMap() {
 			starScale += 0.05
 			// starScale = 1.4
 			gl.PushMatrix()
-			topy := 17
+			topy := 19
 			pm := 0
 			if currStarCenter[0]%2 == 1 {
 				topy = 0
 				pm = -1
 			}
-			gl.Translatef(float32(currStarCenter[0]*30+102), float32(currStarCenter[1]*36+topy+94), 0)
+			gl.Translatef(float32(currStarCenter[0]*33+102), float32(currStarCenter[1]*38+topy+94), 0)
 			drawHex(-22, -14, 6, 1)
 			gl.PopMatrix()
 			gl.PushMatrix()
-			gl.Translatef(float32(currStarCenter[0]*30+102), float32(currStarCenter[1]*36+topy+94), 0)
+			gl.Translatef(float32(currStarCenter[0]*33+102), float32(currStarCenter[1]*38+topy+94), 0)
 			gl.Scalef(starScale, starScale, 1)
 			drawHex(-22, -14-HEX_HEIGHT, hexMap[currStarCenter[0]][currStarCenter[1]-1], starAlpha)
 			drawHex(-22, -20+HEX_HEIGHT, hexMap[currStarCenter[0]][currStarCenter[1]+1], starAlpha)
@@ -291,7 +291,7 @@ func renderHexMap() {
 			if fallticks == 0 {
 				animateFall = make([]*freefall, 0)
 				for x := 0; x < 10; x++ {
-					topy := 17
+					topy := 19
 					if x%2 == 1 {
 						topy = 0
 					}
@@ -334,7 +334,7 @@ func renderHexMap() {
 						}
 						animateFall = append(animateFall, &freefall{x, y, getFallTargetY(x, y), math.Pow(float64(y), 2)/16 + 0.5})
 						gl.PushMatrix()
-						gl.Translatef(float32(x*30+102), float32(y*36+topy+94), 0)
+						gl.Translatef(float32(x*33+102), float32(y*38+topy+94), 0)
 						gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 						drawHex(-22, -14, hexMap[x][y], 1)
 						gl.PopMatrix()
@@ -344,17 +344,17 @@ func renderHexMap() {
 			} else {
 				stillFalling := 0
 				for _, v := range animateFall {
-					topy := 17
+					topy := 19
 					if v.x%2 == 1 {
 						topy = 0
 					}
 					newy := v.accel * math.Pow(float64(fallticks), 2) / 2
 					gl.PushMatrix()
-					gl.Translatef(float32(v.x*30+102), float32(math.Min(float64(v.y*36+topy+94)+newy, float64(v.targetY*36+topy+94))), 0)
+					gl.Translatef(float32(v.x*33+102), float32(math.Min(float64(v.y*38+topy+94)+newy, float64(v.targetY*38+topy+94))), 0)
 					gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 					drawHex(-22, -14, hexMap[v.x][v.y], 1)
 					gl.PopMatrix()
-					if float64(v.y*36+topy+94)+newy < float64(v.targetY*36+topy+94) {
+					if float64(v.y*38+topy+94)+newy < float64(v.targetY*38+topy+94) {
 						stillFalling++
 					}
 				}
@@ -378,13 +378,13 @@ func renderHexMap() {
 	}
 	if currExX > -1 && currExY > -1 {
 		gl.PushMatrix()
-		topy := 17
+		topy := 19
 		if currExX%2 == 1 {
 			topy = 0
 		}
 		if starRotate {
 			timesToRotate = 0
-			gl.Translatef(float32(currExX*30+102), float32(currExY*36+topy+94), 0)
+			gl.Translatef(float32(currExX*33+102), float32(currExY*38+topy+94), 0)
 			gl.Scalef(1.3, 1.3, 1)
 			gl.Rotatef(rotate, 0, 0, 1)
 			drawHex(-22, -14, 6, 1)
@@ -399,7 +399,7 @@ func renderHexMap() {
 			drawHex(8, -36, hexMap[currExX+1][currExY+pm], 1)
 			drawHex(8, -40+HEX_HEIGHT, hexMap[currExX+1][currExY+pm+1], 1)
 		} else {
-			// gl.Translatef(float32(currExX*30+HEX_WIDTH+80), float32(currExxY*36+topy+20+80), 0)
+			// gl.Translatef(float32(currExX*33+HEX_WIDTH+80), float32(currExxY*38+topy+20+80), 0)
 			gl.Translatef(float32(prevSelectPos[0]), float32(prevSelectPos[1]), 0)
 			gl.Scalef(1.3, 1.3, 1)
 			gl.Rotatef(rotate, 0, 0, 1)
@@ -541,18 +541,18 @@ func pointInTriangle(pX, pY, aX, aY, bX, bY, cX, cY float64) bool {
 
 func hexCenter(x, y int) []int {
 	rt := []int{0, 0}
-	rt[0] = x*30 + 80 + HEX_WIDTH/2
+	rt[0] = x*33 + 80 + HEX_WIDTH/2
 	topy := 13
 	if x%2 == 1 {
 		topy = -8
 	}
-	rt[1] = y*36 + 80 + topy + HEX_HEIGHT/2
+	rt[1] = y*38 + 80 + topy + HEX_HEIGHT/2
 	return rt
 }
 
 func calcClosestCenter(x, y int) []int {
 	hexX := int(math.Floor((float64(x) - 80) / 30))
-	topy := -17
+	topy := -19
 	if hexX%2 == 1 {
 		topy = 0
 	}
@@ -681,10 +681,30 @@ func initGL() {
 	gl.LoadIdentity()
 	gl.Enable(gl.DEPTH_TEST)
 
-	hexTex = initTexture("hex3", HEX_WIDTH, HEX_HEIGHT)
+	// hexTex = initTexture("hex5k", HEX_WIDTH, HEX_HEIGHT)
+	hexTex = initTexture2("hex7c")
 	wallpaper = initTexture("wallpaper-2594238", 1024, 768)
-	starTex = initTexture("hexstar2", HEX_WIDTH, HEX_HEIGHT)
+	// starTex = initTexture("hexstark", HEX_WIDTH, HEX_HEIGHT)
+	starTex = initTexture2("hex0")
 	borderTex = initTexture("hexborder", 76, 76)
+}
+
+func initTexture2(filename string) gl.Texture {
+	img, err := glfw.ReadImage(filename+".tga", 0)
+	if err != nil {
+		panic(err)
+	}
+	rt := gl.GenTexture()
+	gl.Enable(gl.TEXTURE_2D)
+	rt.Bind(gl.TEXTURE_2D)
+	gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.MODULATE)
+	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	// gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	// gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.Width(), img.Height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, img.Data())
+	fmt.Println(img.Width(), img.Height())
+	return rt
 }
 
 func initTexture(filename string, width, height int) gl.Texture {
@@ -706,12 +726,9 @@ func initTexture(filename string, width, height int) gl.Texture {
 			if (filename == "hex4v" || filename == "hexstar2" || filename == "hexborder") && r == 0 && g == 0 && b == 0 {
 				a = 0
 			}
-			if filename == "hex3" {
-				r *= a
-				g *= a
-				b *= a
-				fmt.Println(r, g, b, a)
-			}
+			// if filename == "hex5k" {
+			// 	fmt.Println(r, g, b, a)
+			// }
 			base := 4*x + canvas.Stride*y
 			canvas.Pix[base] = uint8(r)
 			canvas.Pix[base+1] = uint8(g)
@@ -725,8 +742,8 @@ func initTexture(filename string, width, height int) gl.Texture {
 	gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.MODULATE)
 	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	// gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	// gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, canvas.Pix)
 	return rt
 }
@@ -803,8 +820,8 @@ func mouseButtonCallback(button, state int) {
 		switch button {
 		case glfw.MouseLeft:
 			// fmt.Println(x, y)
-			currExX = int(math.Floor((float64(x) - 80) / 30))
-			currExY = int(math.Floor((float64(y) - 80 - 17) / 36))
+			currExX = int(math.Floor((float64(x) - 80) / 33))
+			currExY = int(math.Floor((float64(y) - 80 - 19) / 38))
 			if currExX%2 == 1 {
 				currExY = (y - 80) / 36
 			}
@@ -813,7 +830,7 @@ func mouseButtonCallback(button, state int) {
 				currExY = -1
 				return
 			}
-			if hexMap[currExX][currExY] == 6 {
+			if hexMap[currExX][currExY] == 6 && currExX > 0 && currExX < 9 && currExY > 0 && (currExX%2 == 0 && currExY < 7 || currExX%2 == 1 && currExY < 8) {
 				starRotate = true
 			}
 			timesToRotate = 2
