@@ -17,6 +17,7 @@ import (
 
 var hexTex, wallpaper, starTex, borderTex gl.Texture
 
+var hexMap2 HexMap
 var hexMap [10][9]int
 var currExX, currExY int
 var rotate float32
@@ -36,30 +37,37 @@ var selectedHex [][]int
 var posX, posY int
 var prevSelectPos []int
 
-const (
-	HEX_WIDTH  int = 44
-	HEX_HEIGHT     = 40
-)
-
 type freefall struct {
 	x, y    int
 	targetY int
 	accel   float64
 }
 
+type Point struct {
+	X, Y float64
+}
+
+func (p Point) WithOffset() (float64, float64) {
+	return p.X + 80, p.Y + 80
+}
+
+type FieldPoint struct {
+	X, Y int
+}
+
 func genHexMap() {
-	hexMap = [10][9]int{
-		[9]int{0, 2, 0, 0, 5, 1, 1, 1, -1},
-		[9]int{1, 1, 3, 5, 2, 1, 4, 3, 2},
-		[9]int{5, 4, 2, 0, 3, 1, 1, 0, -1},
-		[9]int{3, 4, 1, 3, 2, 5, 2, 3, 4},
-		[9]int{4, 3, 3, 5, 3, 4, 1, 5, -1},
-		[9]int{1, 3, 2, 1, 2, 3, 1, 4, 1},
-		[9]int{4, 5, 6, 5, 1, 5, 3, 6, -1},
-		[9]int{0, 5, 4, 3, 4, 3, 0, 2, 3},
-		[9]int{3, 2, 4, 5, 2, 5, 0, 4, -1},
-		[9]int{0, 2, 5, 0, 0, 2, 2, 4, 5}}
-	return
+	// hexMap = [10][9]int{
+	// 	[9]int{0, 2, 0, 0, 5, 1, 1, 1, -1},
+	// 	[9]int{1, 1, 3, 5, 2, 1, 4, 3, 2},
+	// 	[9]int{5, 4, 2, 0, 3, 1, 1, 0, -1},
+	// 	[9]int{3, 4, 1, 3, 2, 5, 2, 3, 4},
+	// 	[9]int{4, 3, 3, 5, 3, 4, 1, 5, -1},
+	// 	[9]int{1, 3, 2, 1, 2, 3, 1, 4, 1},
+	// 	[9]int{4, 5, 6, 5, 1, 5, 3, 6, -1},
+	// 	[9]int{0, 5, 4, 3, 4, 3, 0, 2, 3},
+	// 	[9]int{3, 2, 4, 5, 2, 5, 0, 4, -1},
+	// 	[9]int{0, 2, 5, 0, 0, 2, 2, 4, 5}}
+	// return
 	rand.Seed(time.Now().Unix())
 	for x := 0; x < 10; x++ {
 		maxy := 8
@@ -176,7 +184,6 @@ func getFallTargetY(x, y int) int {
 }
 
 func renderHexMap() {
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gl.Enable(gl.TEXTURE_2D)
 	gl.Enable(gl.BLEND)
 	gl.Disable(gl.DEPTH_TEST)
@@ -652,6 +659,7 @@ func main() {
 
 	// PurgeQueue()
 	genHexMap()
+	hexMap2 = GenHexMap()
 	for matches := checkHexMap(); len(matches) > 0; matches = checkHexMap() {
 		removeHexAndGenNew(matches)
 	}
@@ -664,7 +672,9 @@ func main() {
 	for sys.CheckExitMainLoop() {
 		start := glfw.Time()
 		wait := float64(1) / float64(30)
-		renderHexMap()
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		// renderHexMap()
+		hexMap2.Render()
 		sys.Refresh()
 		diff := glfw.Time() - start
 		if diff < wait {
@@ -682,7 +692,7 @@ func initGL() {
 	gl.Enable(gl.DEPTH_TEST)
 
 	// hexTex = initTexture("hex5k", HEX_WIDTH, HEX_HEIGHT)
-	hexTex = initTexture2("hex7c")
+	hexTex = initTexture2("hex7d")
 	wallpaper = initTexture("wallpaper-2594238", 1024, 768)
 	// starTex = initTexture("hexstark", HEX_WIDTH, HEX_HEIGHT)
 	starTex = initTexture2("hex0")
