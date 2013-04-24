@@ -1,12 +1,32 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/go-gl/gl"
+	"io/ioutil"
 	"math/rand"
 	"time"
 )
 
-type HexMap [10][9]*Hex
+type Colors struct {
+	Colors [][]int `json:"colors"`
+}
+
+var colors Colors
+
+func init() {
+	c, err := ioutil.ReadFile("colors.json")
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(c, &colors)
+	if err != nil {
+		panic(err)
+	}
+}
+
+type HexMap [11][9]*Hex
 
 type Hex struct {
 	Kind  HexType
@@ -17,10 +37,10 @@ type HexType uint8
 type HexState uint8
 
 const (
-	HEX_WIDTH  int = 44
-	HEX_HEIGHT     = 40
+	HEX_WIDTH  int = 106
+	HEX_HEIGHT     = 106
 
-	OddIncre = 19
+	OddIncre = 45
 )
 
 const (
@@ -29,9 +49,9 @@ const (
 	HexRed
 	HexGreen
 	HexBlue
-	HexYellow
+	HexOrange
 	HexPurple
-	HexLightBlue
+	HexCyan
 
 	HexFlower
 )
@@ -46,13 +66,13 @@ const (
 func GenHexMap() HexMap {
 	rt := HexMap{}
 	rand.Seed(time.Now().Unix())
-	for x := 0; x < 10; x++ {
+	for x := 0; x < 11; x++ {
 		maxy := 8
 		if x%2 == 1 {
 			maxy = 9
 		}
 		for y := 0; y < maxy; y++ {
-			rt[x][y] = &Hex{HexType(rand.Intn(6) + 1), StateNormal}
+			rt[x][y] = &Hex{HexType(rand.Intn(int(HexFlower)) + 1), StateNormal}
 		}
 	}
 
@@ -60,10 +80,7 @@ func GenHexMap() HexMap {
 }
 
 func (m HexMap) Render() {
-	gl.Enable(gl.TEXTURE_2D)
-	gl.Enable(gl.BLEND)
-	gl.Disable(gl.DEPTH_TEST)
-	for x := 0; x < 10; x++ {
+	for x := 0; x < 11; x++ {
 		maxy := 8
 		if x%2 == 1 {
 			maxy = 9
@@ -79,9 +96,6 @@ func (m HexMap) Render() {
 			gl.PopMatrix()
 		}
 	}
-	gl.Flush()
-	gl.Disable(gl.TEXTURE_2D)
-	gl.Disable(gl.BLEND)
 }
 
 func (m HexMap) GetCenter(x, y int) Point {
@@ -93,8 +107,8 @@ func (m HexMap) GetCenter(x, y int) Point {
 
 func (m HexMap) GetTopLeft(x, y int) Point {
 	rt := Point{}
-	rt.X = float64(x * 33)
-	rt.Y = float64(y * 38)
+	rt.X = float64(x * 77)
+	rt.Y = float64(y * 90)
 	if x%2 == 1 {
 		rt.Y -= float64(OddIncre)
 	}
@@ -109,28 +123,15 @@ func (h *Hex) Render(alpha float32) {
 	} else {
 		gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.MODULATE)
 		hexTex.Bind(gl.TEXTURE_2D)
-		var r, g, b float32
-		switch h.Kind {
-		case HexRed:
-			r = 1
-		case HexGreen:
-			g = 1
-		case HexBlue:
-			b = 1
-		case HexYellow:
-			r = 1
-			g = 1
-		case HexPurple:
-			r = 1
-			b = 1
-		case HexLightBlue:
-			g = 1 - 222/255
-			b = 1
-		}
+		gl.GetError()
+		var r, g, b uint8
+		r = uint8(colors.Colors[h.Kind-1][0])
+		g = uint8(colors.Colors[h.Kind-1][1])
+		b = uint8(colors.Colors[h.Kind-1][2])
 		if alpha < 1 {
-			gl.Color4f(r, g, b, alpha)
+			gl.Color4ub(r, g, b, uint8(alpha*255))
 		} else {
-			gl.Color3f(r, g, b)
+			gl.Color3ub(r, g, b)
 		}
 	}
 	gl.Begin(gl.QUADS)

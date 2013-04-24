@@ -48,7 +48,7 @@ type Point struct {
 }
 
 func (p Point) WithOffset() (float64, float64) {
-	return p.X + 80, p.Y + 80
+	return p.X + 100, p.Y + 100
 }
 
 type FieldPoint struct {
@@ -669,12 +669,24 @@ func main() {
 	currExX = -1
 	currExY = -1
 
+	rotat := &AnimateRotate{}
+	rotat.InitAnimation([]FieldPoint{
+		{2, 2}, {3, 2}, {2, 1},
+	}, 2)
+
 	for sys.CheckExitMainLoop() {
 		start := glfw.Time()
 		wait := float64(1) / float64(30)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		gl.Enable(gl.TEXTURE_2D)
+		gl.Enable(gl.BLEND)
+		gl.Disable(gl.DEPTH_TEST)
 		// renderHexMap()
 		hexMap2.Render()
+		rotat.AnimateAndExecute()
+		gl.Flush()
+		gl.Disable(gl.TEXTURE_2D)
+		gl.Disable(gl.BLEND)
 		sys.Refresh()
 		diff := glfw.Time() - start
 		if diff < wait {
@@ -692,15 +704,15 @@ func initGL() {
 	gl.Enable(gl.DEPTH_TEST)
 
 	// hexTex = initTexture("hex5k", HEX_WIDTH, HEX_HEIGHT)
-	hexTex = initTexture2("hex7d")
+	hexTex = initTexture2("hex")
 	wallpaper = initTexture("wallpaper-2594238", 1024, 768)
 	// starTex = initTexture("hexstark", HEX_WIDTH, HEX_HEIGHT)
-	starTex = initTexture2("hex0")
+	starTex = initTexture2("star")
 	borderTex = initTexture("hexborder", 76, 76)
 }
 
 func initTexture2(filename string) gl.Texture {
-	img, err := glfw.ReadImage(filename+".tga", 0)
+	img, err := glfw.ReadImage(filename+".tga", glfw.NoRescaleBit)
 	if err != nil {
 		panic(err)
 	}
@@ -713,7 +725,7 @@ func initTexture2(filename string) gl.Texture {
 	// gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	// gl.TexParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.Width(), img.Height(), 0, gl.RGBA, gl.UNSIGNED_BYTE, img.Data())
-	fmt.Println(img.Width(), img.Height())
+	fmt.Println(filename, img.Width(), img.Height())
 	return rt
 }
 
