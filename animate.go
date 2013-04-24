@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-gl/gl"
 	"math"
 )
@@ -16,6 +17,10 @@ type AnimateRotate struct {
 type SelectedHex struct {
 	Hex *Hex
 	Pos FieldPoint
+}
+
+func (h *SelectedHex) String() string {
+	return fmt.Sprintf("%x %x", h.Pos.X, h.Pos.Y)
 }
 
 func (r *AnimateRotate) InitAnimation(hexes []FieldPoint, timesToRotate int) {
@@ -64,7 +69,12 @@ func (r *AnimateRotate) AnimateAndExecute() {
 	if r.RotateAngle < 120 {
 		r.RotateAngle += 15
 	} else {
+		fmt.Println(r.SelectedHex[0].Hex, r.SelectedHex[1].Hex, r.SelectedHex[2].Hex)
 		hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y], hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y], hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y] = hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y], hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y], hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y]
+		r.SelectedHex[0].Hex, r.SelectedHex[1].Hex, r.SelectedHex[2].Hex = r.SelectedHex[2].Hex, r.SelectedHex[0].Hex, r.SelectedHex[1].Hex
+		fmt.Println(r.SelectedHex[0].Hex, hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y])
+		fmt.Println(r.SelectedHex[1].Hex, hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y])
+		fmt.Println(r.SelectedHex[2].Hex, hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y])
 		r.TimesToRotate--
 		r.RotateAngle = 0
 		r.PauseTicks = 5
@@ -74,9 +84,9 @@ func (r *AnimateRotate) AnimateAndExecute() {
 			}
 			r.SelectedHex = nil
 			r.SelectedHex = make([]SelectedHex, 0)
-		}
-		if r.postHook != nil {
-			r.postHook()
+			if r.postHook != nil {
+				r.postHook()
+			}
 		}
 	}
 }

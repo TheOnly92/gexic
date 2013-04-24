@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/go-gl/gl"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -37,10 +38,13 @@ type HexType uint8
 type HexState uint8
 
 const (
-	HEX_WIDTH  int = 106
-	HEX_HEIGHT     = 106
+	HEX_WIDTH  int = 92
+	HEX_HEIGHT     = 80
 
-	OddIncre = 45
+	OddIncre = 39
+
+	XMultiply = 67
+	YMultiply = 77
 )
 
 const (
@@ -107,12 +111,96 @@ func (m HexMap) GetCenter(x, y int) Point {
 
 func (m HexMap) GetTopLeft(x, y int) Point {
 	rt := Point{}
-	rt.X = float64(x * 77)
-	rt.Y = float64(y * 90)
+	rt.X = float64(x * XMultiply)
+	rt.Y = float64(y * YMultiply)
 	if x%2 == 1 {
 		rt.Y -= float64(OddIncre)
 	}
 	return rt
+}
+
+func (m HexMap) CalcClosestCenter(x, y int) (Point, bool) {
+	rt := Point{}
+	hex := FieldPoint{int(math.Floor((float64(x) - FieldOffsetX) / float64(XMultiply))), 0}
+	if hex.X%2 == 0 {
+		hex.Y = int(math.Floor((float64(y) - FieldOffsetY) / float64(YMultiply)))
+	} else {
+		hex.Y = int(math.Floor((float64(y+OddIncre) - FieldOffsetY) / float64(YMultiply)))
+	}
+	left, right := m.GetCenter(0, 0), m.GetCenter(10, 0)
+	x = int(math.Min(math.Max(float64(x), left.X), right.X))
+	top, bottom := m.GetCenter(hex.X, 0), m.GetCenter(hex.X, 7)
+	if hex.X%2 == 1 {
+		bottom = m.GetCenter(hex.X, 8)
+	}
+	y = int(math.Min(math.Max(float64(y), top.Y), bottom.Y))
+	if hex.X > 10 || hex.X < 0 || hex.Y < 0 || (hex.X%2 == 0 && hex.Y > 7) || (hex.X%2 == 1 && hex.Y > 8) {
+		return rt, false
+	}
+	for loopX := hex.X - 1; loopX <= hex.X+2; loopX++ {
+		if loopX < 0 || loopX > 10 {
+			continue
+		}
+		for loopY := hex.Y - 2; loopY <= hex.Y; loopY++ {
+			if loopY < 0 || (loopX%2 == 0 && loopY > 7) || (loopX%2 == 1 && loopY > 8) {
+				continue
+			}
+			if loopX%2 == 1 {
+				c1X, c1Y := m.GetCenter(loopX, loopY).WithOffset()
+				c2X, c2Y := m.GetCenter(loopX+1, loopY).WithOffset()
+				c3X, c3Y := m.GetCenter(loopX, loopY+1).WithOffset()
+				c4X, c4Y := m.GetCenter(loopX+1, loopY-2).WithOffset()
+				if pointInTriangle(float64(x), float64(y), c1X, c1Y, c2X, c2Y, c3X, c3Y) {
+					mouse.selectedHex = nil
+					mouse.selectedHex = []FieldPoint{
+						{loopX, loopY},
+						{loopX + 1, loopY},
+						{loopX, loopY + 1},
+					}
+					rt.X = c2X - float64(HEX_WIDTH)/2
+					rt.Y = c2Y
+					return rt, true
+				} else if pointInTriangle(float64(x), float64(y), c1X, c1Y, c4X, c4Y, c2X, c2Y) && loopX+1 < 11 && loopY-1 >= 0 {
+					mouse.selectedHex = nil
+					mouse.selectedHex = []FieldPoint{
+						{loopX, loopY},
+						{loopX + 1, loopY - 1},
+						{loopX + 1, loopY},
+					}
+					rt.X = c1X - float64(HEX_WIDTH)/2
+					rt.Y = c1Y
+					return rt, true
+				}
+			} else {
+				c1X, c1Y := m.GetCenter(loopX, loopY).WithOffset()
+				c2X, c2Y := m.GetCenter(loopX+1, loopY+1).WithOffset()
+				c3X, c3Y := m.GetCenter(loopX, loopY+1).WithOffset()
+				c4X, c4Y := m.GetCenter(loopX+1, loopY).WithOffset()
+				if pointInTriangle(float64(x), float64(y), c1X, c1Y, c2X, c2Y, c3X, c3Y) {
+					mouse.selectedHex = nil
+					mouse.selectedHex = []FieldPoint{
+						{loopX, loopY},
+						{loopX + 1, loopY + 1},
+						{loopX, loopY + 1},
+					}
+					rt.X = c2X - float64(HEX_WIDTH)/2
+					rt.Y = c2Y
+					return rt, true
+				} else if pointInTriangle(float64(x), float64(y), c1X, c1Y, c4X, c4Y, c2X, c2Y) {
+					mouse.selectedHex = nil
+					mouse.selectedHex = []FieldPoint{
+						{loopX, loopY},
+						{loopX + 1, loopY},
+						{loopX + 1, loopY + 1},
+					}
+					rt.X = c1X - float64(HEX_WIDTH)/2
+					rt.Y = c1Y
+					return rt, true
+				}
+			}
+		}
+	}
+	return rt, false
 }
 
 func (h *Hex) Render(alpha float32) {

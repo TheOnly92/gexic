@@ -47,8 +47,13 @@ type Point struct {
 	X, Y float64
 }
 
+const (
+	FieldOffsetX float64 = 100
+	FieldOffsetY         = 100
+)
+
 func (p Point) WithOffset() (float64, float64) {
-	return p.X + 100, p.Y + 100
+	return p.X + FieldOffsetX, p.Y + FieldOffsetY
 }
 
 type FieldPoint struct {
@@ -652,7 +657,7 @@ func main() {
 	// InitQueue()
 
 	sys.CreateWindow(1024, 768, "Gexic")
-	gl.ClearColor(0., 0.2, 0.4, 0.)
+	gl.ClearColor(1, 1, 1, 0.)
 	initGL()
 
 	prevSelectPos = []int{0, 0, 0}
@@ -663,16 +668,11 @@ func main() {
 	for matches := checkHexMap(); len(matches) > 0; matches = checkHexMap() {
 		removeHexAndGenNew(matches)
 	}
-	glfw.SetMouseButtonCallback(mouseButtonCallback)
+	glfw.SetMouseButtonCallback(MouseButtonCallback)
 	glfw.SetCharCallback(charCallback)
-	glfw.SetMousePosCallback(mousePosCallback)
+	glfw.SetMousePosCallback(MousePosCallback)
 	currExX = -1
 	currExY = -1
-
-	rotat := &AnimateRotate{}
-	rotat.InitAnimation([]FieldPoint{
-		{2, 2}, {3, 2}, {2, 1},
-	}, 2)
 
 	for sys.CheckExitMainLoop() {
 		start := glfw.Time()
@@ -682,8 +682,24 @@ func main() {
 		gl.Enable(gl.BLEND)
 		gl.Disable(gl.DEPTH_TEST)
 		// renderHexMap()
+		wallpaper.Bind(gl.TEXTURE_2D)
+		gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.REPLACE)
+		gl.Begin(gl.QUADS)
+		gl.TexCoord2f(0, 0)
+		gl.Vertex2i(0, 0)
+		gl.TexCoord2f(0, 1)
+		gl.Vertex2i(0, 768)
+		gl.TexCoord2f(1, 1)
+		gl.Vertex2i(1024, 768)
+		gl.TexCoord2f(1, 0)
+		gl.Vertex2i(1024, 0)
+		gl.End()
 		hexMap2.Render()
-		rotat.AnimateAndExecute()
+		hexRotate.AnimateAndExecute()
+		if !mouse.locked {
+			x, y := mouse.GetXY()
+			hexMap2.CalcClosestCenter(x, y)
+		}
 		gl.Flush()
 		gl.Disable(gl.TEXTURE_2D)
 		gl.Disable(gl.BLEND)
@@ -705,7 +721,7 @@ func initGL() {
 
 	// hexTex = initTexture("hex5k", HEX_WIDTH, HEX_HEIGHT)
 	hexTex = initTexture2("hex")
-	wallpaper = initTexture("wallpaper-2594238", 1024, 768)
+	wallpaper = initTexture("dark_wood_@2X", 1024, 768)
 	// starTex = initTexture("hexstark", HEX_WIDTH, HEX_HEIGHT)
 	starTex = initTexture2("star")
 	borderTex = initTexture("hexborder", 76, 76)
