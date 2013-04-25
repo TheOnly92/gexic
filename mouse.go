@@ -8,6 +8,7 @@ var mouse Mouse
 
 var (
 	hexRotate AnimateRotate
+	hexShrink ShrinkHex
 )
 
 type Mouse struct {
@@ -40,7 +41,7 @@ func MouseButtonCallback(button, state int) {
 
 			} else if len(mouse.selectedHex) == 3 {
 				mouse.locked = true
-				hexRotate.InitAnimation(mouse.selectedHex, 3)
+				hexRotate.InitAnimation(mouse.selectedHex, 2)
 				hexRotate.SetPostHook(func() {
 					mouse.locked = false
 				})

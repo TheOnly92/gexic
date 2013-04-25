@@ -29,6 +29,8 @@ func (r *AnimateRotate) InitAnimation(hexes []FieldPoint, timesToRotate int) {
 		hexMap2[p.X][p.Y].State = StateRotating
 	}
 	r.TimesToRotate = timesToRotate
+	r.RotateAngle = 0
+	r.PauseTicks = 0
 }
 
 func (r *AnimateRotate) SetPostHook(f func()) {
@@ -36,14 +38,14 @@ func (r *AnimateRotate) SetPostHook(f func()) {
 }
 
 func (r *AnimateRotate) AnimateAndExecute() {
-	if r.TimesToRotate == 0 {
+	if len(r.SelectedHex) == 0 {
 		return
 	}
 	gl.PushMatrix()
 	var p Point
 	for _, hex := range r.SelectedHex {
-		p.X += hexMap2.GetTopLeft(hex.Pos.X, hex.Pos.Y).X
-		p.Y += hexMap2.GetTopLeft(hex.Pos.X, hex.Pos.Y).Y
+		p.X += hexMap2.GetCenter(hex.Pos.X, hex.Pos.Y).X
+		p.Y += hexMap2.GetCenter(hex.Pos.X, hex.Pos.Y).Y
 	}
 	p.X /= 3
 	p.Y /= 3
@@ -59,7 +61,7 @@ func (r *AnimateRotate) AnimateAndExecute() {
 		gl.PushMatrix()
 		x2, y2 := hexMap2.GetTopLeft(hex.Pos.X, hex.Pos.Y).WithOffset()
 		gl.Translatef(float32(x2-x), float32(y2-y), 0)
-		hex.Hex.Render(1)
+		hex.Hex.Render(1, false)
 		gl.PopMatrix()
 	}
 	gl.PopMatrix()
@@ -72,21 +74,29 @@ func (r *AnimateRotate) AnimateAndExecute() {
 		fmt.Println(r.SelectedHex[0].Hex, r.SelectedHex[1].Hex, r.SelectedHex[2].Hex)
 		hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y], hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y], hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y] = hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y], hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y], hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y]
 		r.SelectedHex[0].Hex, r.SelectedHex[1].Hex, r.SelectedHex[2].Hex = r.SelectedHex[2].Hex, r.SelectedHex[0].Hex, r.SelectedHex[1].Hex
-		fmt.Println(r.SelectedHex[0].Hex, hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y])
-		fmt.Println(r.SelectedHex[1].Hex, hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y])
-		fmt.Println(r.SelectedHex[2].Hex, hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y])
-		r.TimesToRotate--
-		r.RotateAngle = 0
-		r.PauseTicks = 5
-		if r.TimesToRotate == 0 {
+		collide := hexMap2.CheckCollision()
+		if r.TimesToRotate == 0 || collide {
 			for _, hex := range r.SelectedHex {
-				hex.Hex.State = StateNormal
+				if hex.Hex.State == StateRotating {
+					hex.Hex.State = StateNormal
+				}
 			}
 			r.SelectedHex = nil
 			r.SelectedHex = make([]SelectedHex, 0)
-			if r.postHook != nil {
-				r.postHook()
+			if collide {
+				hexShrink.InitAnimation()
+				if r.postHook != nil {
+					hexShrink.postHook = r.postHook
+				}
+			} else {
+				if r.postHook != nil {
+					r.postHook()
+				}
 			}
+		} else {
+			r.TimesToRotate--
+			r.RotateAngle = 0
+			r.PauseTicks = 5
 		}
 	}
 }
@@ -128,7 +138,7 @@ func (f *AnimateFall) AnimateAndExecute() {
 		_, tY := hexMap2.GetTopLeft(hex.Pos.X, hex.Target.Y).WithOffset()
 		newY := math.Min(y+displaceY, tY)
 		gl.Translatef(float32(x), float32(newY), 0)
-		hex.Hex.Render(1)
+		hex.Hex.Render(1, false)
 		gl.PopMatrix()
 		if newY < tY {
 			stillFalling++
@@ -139,5 +149,53 @@ func (f *AnimateFall) AnimateAndExecute() {
 		f.FallHex = nil
 		f.FallHex = make([]FallHex, 0)
 		f.postHook()
+	}
+}
+
+type ShrinkHex struct {
+	SelectedHex []SelectedHex
+	Scale       float32
+	postHook    func()
+}
+
+func (s *ShrinkHex) InitAnimation() {
+	for x := 0; x < 10; x++ {
+		maxy := 8
+		if x%2 == 1 {
+			maxy = 9
+		}
+		for y := 0; y < maxy; y++ {
+			if hexMap2[x][y].State == StateShrinking {
+				s.SelectedHex = append(s.SelectedHex, SelectedHex{hexMap2[x][y], FieldPoint{x, y}})
+			}
+		}
+	}
+	s.Scale = 1
+}
+
+func (r *ShrinkHex) SetPostHook(f func()) {
+	r.postHook = f
+}
+
+func (s *ShrinkHex) AnimateAndExecute() {
+	if len(s.SelectedHex) == 0 {
+		return
+	}
+	if s.Scale > 0 {
+		s.Scale -= 0.1
+		for _, hex := range s.SelectedHex {
+			gl.PushMatrix()
+			x, y := hexMap2.GetCenter(hex.Pos.X, hex.Pos.Y).WithOffset()
+			gl.Translatef(float32(x), float32(y), 0)
+			gl.Scalef(s.Scale, s.Scale, 1)
+			hex.Hex.Render(1, true)
+			gl.PopMatrix()
+		}
+	} else {
+		if s.postHook != nil {
+			s.postHook()
+		}
+		s.SelectedHex = nil
+		s.SelectedHex = make([]SelectedHex, 0)
 	}
 }

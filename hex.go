@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-gl/gl"
 	"io/ioutil"
 	"math"
@@ -65,6 +66,7 @@ const (
 	StateRotating
 	StateFalling
 	StateRotatingStar
+	StateShrinking
 )
 
 func GenHexMap() HexMap {
@@ -76,7 +78,21 @@ func GenHexMap() HexMap {
 			maxy = 9
 		}
 		for y := 0; y < maxy; y++ {
-			rt[x][y] = &Hex{HexType(rand.Intn(int(HexFlower)) + 1), StateNormal}
+			rt[x][y] = &Hex{HexType(rand.Intn(int(HexFlower)-1) + 1), StateNormal}
+		}
+	}
+	for rt.CheckCollision() {
+		for x := 0; x < 11; x++ {
+			maxy := 8
+			if x%2 == 1 {
+				maxy = 9
+			}
+			for y := 0; y < maxy; y++ {
+				if rt[x][y].State == StateShrinking {
+					rt[x][y] = nil
+					rt[x][y] = &Hex{HexType(rand.Intn(int(HexFlower)-1) + 1), StateNormal}
+				}
+			}
 		}
 	}
 
@@ -96,7 +112,7 @@ func (m HexMap) Render() {
 			gl.PushMatrix()
 			posX, posY := m.GetTopLeft(x, y).WithOffset()
 			gl.Translatef(float32(posX), float32(posY), 0)
-			m[x][y].Render(1)
+			m[x][y].Render(1, false)
 			gl.PopMatrix()
 		}
 	}
@@ -115,6 +131,99 @@ func (m HexMap) GetTopLeft(x, y int) Point {
 	rt.Y = float64(y * YMultiply)
 	if x%2 == 1 {
 		rt.Y -= float64(OddIncre)
+	}
+	return rt
+}
+
+func (m HexMap) CheckCollision() bool {
+	rt := false
+	for x := 0; x < 11; x++ {
+		maxy := 8
+		if x%2 == 1 {
+			maxy = 9
+		}
+		for y := 0; y < maxy; y++ {
+			kind := m[x][y].Kind
+			if y+1 < maxy && x < 10 {
+				if x%2 == 0 && m[x+1][y+1].Kind == kind && m[x][y+1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x+1][y+1].State = StateShrinking
+					m[x][y+1].State = StateShrinking
+				} else if x%2 == 1 && m[x+1][y].Kind == kind && m[x][y+1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x+1][y].State = StateShrinking
+					m[x][y+1].State = StateShrinking
+				}
+			}
+			if x > 0 {
+				fmt.Println(x, y)
+				if x%2 == 0 && m[x-1][y+1].Kind == kind && m[x-1][y].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x-1][y+1].State = StateShrinking
+					m[x-1][y].State = StateShrinking
+				} else if x%2 == 1 && y > 0 && y < maxy-1 && m[x-1][y].Kind == kind && m[x-1][y-1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x-1][y].State = StateShrinking
+					m[x-1][y-1].State = StateShrinking
+				}
+			}
+			if y > 0 && x < 10 {
+				if x%2 == 0 && m[x+1][y].Kind == kind && m[x][y-1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x+1][y].State = StateShrinking
+					m[x][y-1].State = StateShrinking
+				} else if x%2 == 1 && y > 0 && m[x+1][y-1].Kind == kind && m[x][y-1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x+1][y-1].State = StateShrinking
+					m[x][y-1].State = StateShrinking
+				}
+			}
+			if y+1 < maxy && x > 0 {
+				if x%2 == 0 && m[x-1][y+1].Kind == kind && m[x][y+1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x-1][y+1].State = StateShrinking
+					m[x][y+1].State = StateShrinking
+				} else if x%2 == 1 && m[x-1][y].Kind == kind && m[x][y+1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x-1][y].State = StateShrinking
+					m[x][y+1].State = StateShrinking
+				}
+			}
+			if x < 10 {
+				if x%2 == 0 && m[x+1][y].Kind == kind && m[x+1][y+1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x+1][y].State = StateShrinking
+					m[x+1][y+1].State = StateShrinking
+				} else if x%2 == 1 && y > 0 && y < maxy-1 && m[x+1][y-1].Kind == kind && m[x+1][y].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x+1][y-1].State = StateShrinking
+					m[x+1][y].State = StateShrinking
+				}
+			}
+			if y > 0 && x > 0 {
+				if x%2 == 0 && m[x-1][y].Kind == kind && m[x][y-1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x-1][y].State = StateShrinking
+					m[x][y-1].State = StateShrinking
+				} else if x%2 == 1 && m[x-1][y-1].Kind == kind && m[x][y-1].Kind == kind {
+					rt = true
+					m[x][y].State = StateShrinking
+					m[x-1][y-1].State = StateShrinking
+					m[x][y-1].State = StateShrinking
+				}
+			}
+		}
 	}
 	return rt
 }
@@ -203,7 +312,7 @@ func (m HexMap) CalcClosestCenter(x, y int) (Point, bool) {
 	return rt, false
 }
 
-func (h *Hex) Render(alpha float32) {
+func (h *Hex) Render(alpha float32, drawFromCenter bool) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	if h.Kind == HexFlower {
 		gl.TexEnvf(gl.TEXTURE_ENV, gl.TEXTURE_ENV_MODE, gl.REPLACE)
@@ -224,12 +333,28 @@ func (h *Hex) Render(alpha float32) {
 	}
 	gl.Begin(gl.QUADS)
 	gl.TexCoord2f(0, 0)
-	gl.Vertex2i(HEX_WIDTH/2, HEX_HEIGHT/2)
+	if drawFromCenter {
+		gl.Vertex2i(HEX_WIDTH/2, HEX_HEIGHT/2)
+	} else {
+		gl.Vertex2i(HEX_WIDTH, HEX_HEIGHT)
+	}
 	gl.TexCoord2f(0, 1)
-	gl.Vertex2i(HEX_WIDTH/2, -HEX_HEIGHT/2)
+	if drawFromCenter {
+		gl.Vertex2i(HEX_WIDTH/2, -HEX_HEIGHT/2)
+	} else {
+		gl.Vertex2i(HEX_WIDTH, 0)
+	}
 	gl.TexCoord2f(1, 1)
-	gl.Vertex2i(-HEX_WIDTH/2, -HEX_HEIGHT/2)
+	if drawFromCenter {
+		gl.Vertex2i(-HEX_WIDTH/2, -HEX_HEIGHT/2)
+	} else {
+		gl.Vertex2i(0, 0)
+	}
 	gl.TexCoord2f(1, 0)
-	gl.Vertex2i(-HEX_WIDTH/2, HEX_HEIGHT/2)
+	if drawFromCenter {
+		gl.Vertex2i(-HEX_WIDTH/2, HEX_HEIGHT/2)
+	} else {
+		gl.Vertex2i(0, HEX_HEIGHT)
+	}
 	gl.End()
 }

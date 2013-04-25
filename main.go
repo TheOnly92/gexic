@@ -663,11 +663,11 @@ func main() {
 	prevSelectPos = []int{0, 0, 0}
 
 	// PurgeQueue()
-	genHexMap()
+	// genHexMap()
 	hexMap2 = GenHexMap()
-	for matches := checkHexMap(); len(matches) > 0; matches = checkHexMap() {
-		removeHexAndGenNew(matches)
-	}
+	// for matches := checkHexMap(); len(matches) > 0; matches = checkHexMap() {
+	// 	removeHexAndGenNew(matches)
+	// }
 	glfw.SetMouseButtonCallback(MouseButtonCallback)
 	glfw.SetCharCallback(charCallback)
 	glfw.SetMousePosCallback(MousePosCallback)
@@ -696,6 +696,7 @@ func main() {
 		gl.End()
 		hexMap2.Render()
 		hexRotate.AnimateAndExecute()
+		hexShrink.AnimateAndExecute()
 		if !mouse.locked {
 			x, y := mouse.GetXY()
 			hexMap2.CalcClosestCenter(x, y)
