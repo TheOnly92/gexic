@@ -1,6 +1,7 @@
 package main
 
 import (
+	// "fmt"
 	"github.com/go-gl/glfw"
 )
 
@@ -9,6 +10,7 @@ var mouse Mouse
 var (
 	hexRotate AnimateRotate
 	hexShrink ShrinkHex
+	hexFall   AnimateFall
 )
 
 type Mouse struct {

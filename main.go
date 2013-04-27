@@ -697,6 +697,7 @@ func main() {
 		hexMap2.Render()
 		hexRotate.AnimateAndExecute()
 		hexShrink.AnimateAndExecute()
+		hexFall.AnimateAndExecute()
 		if !mouse.locked {
 			x, y := mouse.GetXY()
 			hexMap2.CalcClosestCenter(x, y)

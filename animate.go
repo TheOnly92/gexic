@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-gl/gl"
 	"math"
+	"math/rand"
 )
 
 type AnimateRotate struct {
@@ -69,7 +70,7 @@ func (r *AnimateRotate) AnimateAndExecute() {
 		return
 	}
 	if r.RotateAngle < 120 {
-		r.RotateAngle += 15
+		r.RotateAngle += 20
 	} else {
 		fmt.Println(r.SelectedHex[0].Hex, r.SelectedHex[1].Hex, r.SelectedHex[2].Hex)
 		hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y], hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y], hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y] = hexMap2[r.SelectedHex[2].Pos.X][r.SelectedHex[2].Pos.Y], hexMap2[r.SelectedHex[0].Pos.X][r.SelectedHex[0].Pos.Y], hexMap2[r.SelectedHex[1].Pos.X][r.SelectedHex[1].Pos.Y]
@@ -115,8 +116,8 @@ type FallHex struct {
 }
 
 func (f *AnimateFall) InitAnimation(fallHexes []FallHex) {
-	for _, f := range fallHexes {
-		f.Accel = math.Pow(float64(f.Pos.Y), 2)/16 + 1
+	for i, hex := range fallHexes {
+		fallHexes[i].Accel = math.Pow(float64(hex.Pos.Y+6), 2) / 32
 	}
 	f.FallHex = fallHexes
 	f.FallTicks = 0
@@ -146,9 +147,21 @@ func (f *AnimateFall) AnimateAndExecute() {
 	}
 	f.FallTicks++
 	if stillFalling == 0 {
+		for _, hex := range f.FallHex {
+			hex.Hex.State = StateNormal
+		}
 		f.FallHex = nil
 		f.FallHex = make([]FallHex, 0)
-		f.postHook()
+		if hexMap2.CheckCollision() {
+			hexShrink.InitAnimation()
+			if f.postHook != nil {
+				hexShrink.postHook = f.postHook
+			}
+		} else {
+			if f.postHook != nil {
+				f.postHook()
+			}
+		}
 	}
 }
 
@@ -159,7 +172,8 @@ type ShrinkHex struct {
 }
 
 func (s *ShrinkHex) InitAnimation() {
-	for x := 0; x < 10; x++ {
+	fmt.Println("Shrink init called")
+	for x := 0; x < 11; x++ {
 		maxy := 8
 		if x%2 == 1 {
 			maxy = 9
@@ -182,7 +196,7 @@ func (s *ShrinkHex) AnimateAndExecute() {
 		return
 	}
 	if s.Scale > 0 {
-		s.Scale -= 0.1
+		s.Scale -= 0.2
 		for _, hex := range s.SelectedHex {
 			gl.PushMatrix()
 			x, y := hexMap2.GetCenter(hex.Pos.X, hex.Pos.Y).WithOffset()
@@ -192,8 +206,66 @@ func (s *ShrinkHex) AnimateAndExecute() {
 			gl.PopMatrix()
 		}
 	} else {
+		fallHexes := make([]FallHex, 0)
+		for x := 0; x < 11; x++ {
+			maxy := 7
+			if x%2 == 1 {
+				maxy = 8
+			}
+			fell := false
+			for y := maxy; y >= 0; y-- {
+				if hexMap2[x][y].State == StateShrinking && !fell {
+					hexMap2[x][y] = nil
+					for y2 := y; y2 > 0; y2-- {
+						hexMap2[x][y2] = hexMap2[x][y2-1]
+						if hexMap2[x][y2].State == StateShrinking {
+							continue
+						}
+						hexMap2[x][y2].State = StateFalling
+						fallHexes = append(fallHexes, FallHex{hexMap2[x][y2], FieldPoint{x, y2}, FieldPoint{x, y2 - 1}, 0})
+						fmt.Println(1, x, y2, x, y2-1)
+					}
+					hexMap2[x][0] = &Hex{HexType(rand.Intn(int(HexFlower)-1) + 1), StateFalling}
+					fallHexes = append(fallHexes, FallHex{hexMap2[x][0], FieldPoint{x, 0}, FieldPoint{x, -1}, 0})
+					fell = true
+				} else if hexMap2[x][y].State == StateShrinking && fell {
+					hexMap2[x][y] = nil
+					for y2 := y; y2 > 0; y2-- {
+						hexMap2[x][y2] = hexMap2[x][y2-1]
+						if hexMap2[x][y2].State == StateShrinking {
+							continue
+						}
+						hexMap2[x][y2].State = StateFalling
+						// found := false
+						// for i, hex := range fallHexes {
+						// 	if hex.Hex == hexMap2[x][y2] {
+						// 		found = true
+						// 		fallHexes[i].Target.Y++
+						// 		break
+						// 	}
+						// }
+						fmt.Println(2, x, y2, x, y2-1)
+					}
+					miny := 0
+					for i, hex := range fallHexes {
+						if hex.Pos.X == x {
+							fallHexes[i].Target.Y++
+							if hex.Pos.Y < miny {
+								miny = hex.Pos.Y
+							}
+						}
+					}
+					hexMap2[x][0] = &Hex{HexType(rand.Intn(int(HexFlower)-1) + 1), StateFalling}
+					fallHexes = append(fallHexes, FallHex{hexMap2[x][0], FieldPoint{x, 0}, FieldPoint{x, miny - 1}, 0})
+				}
+				if hexMap2[x][y].State == StateShrinking {
+					y = maxy + 1
+				}
+			}
+		}
+		hexFall.InitAnimation(fallHexes)
 		if s.postHook != nil {
-			s.postHook()
+			hexFall.SetPostHook(s.postHook)
 		}
 		s.SelectedHex = nil
 		s.SelectedHex = make([]SelectedHex, 0)
