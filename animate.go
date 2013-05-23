@@ -117,7 +117,7 @@ type FallHex struct {
 
 func (f *AnimateFall) InitAnimation(fallHexes []FallHex) {
 	for i, hex := range fallHexes {
-		fallHexes[i].Accel = math.Pow(float64(hex.Pos.Y+6), 2) / 32
+		fallHexes[i].Accel = math.Pow(float64(hex.Pos.Y+8), 2) / 32
 	}
 	f.FallHex = fallHexes
 	f.FallTicks = 0
@@ -195,8 +195,9 @@ func (s *ShrinkHex) AnimateAndExecute() {
 	if len(s.SelectedHex) == 0 {
 		return
 	}
-	if s.Scale > 0 {
-		s.Scale -= 0.2
+	if s.Scale > 0.2 {
+		s.Scale -= 0.15
+		fmt.Println(s.Scale)
 		for _, hex := range s.SelectedHex {
 			gl.PushMatrix()
 			x, y := hexMap2.GetCenter(hex.Pos.X, hex.Pos.Y).WithOffset()
